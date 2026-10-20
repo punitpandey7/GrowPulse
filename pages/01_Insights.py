@@ -18,10 +18,14 @@ st.markdown(
     """
 <style>
     .block-container { padding-top: 1.0rem; padding-bottom: 2rem; max-width: 1200px; }
-    .stApp { background: radial-gradient(1200px 600px at 80% -10%, #F0F9FF 0%, #F8FAFC 55%, #F8FAFC 100%); }
-    .gp-quote { border-left: 3px solid #2563EB; border-radius: 10px; background: #FFFFFF; border: 1px solid #E5E7EB; padding: 12px 14px; min-height: 168px; font-size: .92rem; line-height: 1.5; color: #1F2937; }
+    .stApp { background: radial-gradient(1400px 700px at 10% -20%, #EEF6FF 0%, #F8FAFC 40%, #F7F9FC 100%); }
+    header[data-testid="stHeader"] { background: transparent; }
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #F8FAFF 0%, #F6F8FB 100%); border-right: 1px solid #E6EBF5; }
+    .gp-quote { border-left: 3px solid #2563EB; border-radius: 12px; background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%); border: 1px solid #E6EBF5; padding: 14px 16px; min-height: 168px; font-size: .94rem; line-height: 1.55; color: #1F2937; box-shadow: 0 10px 40px -24px rgba(15,23,42,0.8); }
     .gp-quote .src { font-size: .76rem; color: #6B7280; margin-top: 10px; }
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 12px; border-color: #E5E7EB; }
+    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; border-color: #E6EBF5; background: #FFFFFF; box-shadow: 0 10px 40px -24px rgba(15,23,42,0.8); }
+    [data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 { color: #0F172A; letter-spacing: -.2px; }
+    .stCaption { color: #475569 !important; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -29,46 +33,6 @@ st.markdown(
 
 artifacts = st.session_state.get("artifacts")
 if not artifacts:
-    st.warning("Run analysis from **Home** first.")
-    st.page_link("Home.py", label="Go to Home")
+    st.warning("🔍 No analysis results yet. Please run the analysis from the **Home** page first.")
+    st.page_link("app.py", label="⬅️ Go to Home to run analysis")
     st.stop()
-
-insights = artifacts["insights"]
-
-st.markdown("### Insights")
-st.caption(f"{insights['total_reviews']:,} reviews clustered into {insights['themes_clustered']} themes (strongest match wins)")
-
-left, right = st.columns([3, 2], gap="large")
-with left, st.container(border=True):
-    st.markdown("**Reviews per theme**")
-    chart_data = {t["theme"]: t["review_count"] for t in insights["themes"]}
-    if insights.get("other_count"):
-        chart_data["(unclustered)"] = insights["other_count"]
-    st.bar_chart(chart_data, height=320)
-
-with right, st.container(border=True):
-    st.markdown("**Where the pain is** — ranked by 1-2★ volume")
-    pain = sorted(insights["themes"], key=lambda t: (-t.get("lowstar", 0), -t["review_count"]))
-    for i, t in enumerate(pain, 1):
-        tr = t.get("trend") or {}
-        st.markdown(f"**{i}. {t['theme']}**")
-        base = f"{t.get('lowstar', 0)} of {t['review_count']} reviews are 1-2★ ({t.get('lowstar_share', 0) * 100:.0f}%) · avg {t['avg_rating']}★"
-        if tr.get("meaningful"):
-            arrow = {"worse": "▲", "better": "▼", "flat": "→"}.get(tr["direction"], "→")
-            st.caption(f"{base} · last 4w {arrow} {tr['recent_4w']} vs {tr['prev_4w']} before ({tr['delta_pct']:+d}%) — {tr['direction']}")
-        else:
-            st.caption(f"{base} · trend n/a")
-        if i < len(pain):
-            st.divider()
-    st.caption("Ranked by the number of 1-2 star reviews, not by theme size.")
-
-st.markdown("### Verbatim quotes")
-st.caption("Untouched review text — each quote carries its id, source and date.")
-qcols = st.columns(3, gap="medium")
-for i, q in enumerate(insights["quotes"]):
-    with qcols[i % 3]:
-        st.markdown(
-            f'<div class="gp-quote">“{q["quote"]}”'
-            f'<div class="src">— {q["theme"]}<br>{q["source"]}, {q["rating"]}★, {q["date"]}<br>id {q["review_id"]}</div></div>',
-            unsafe_allow_html=True,
-        )

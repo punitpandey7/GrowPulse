@@ -30,7 +30,7 @@ st.markdown(
 artifacts = st.session_state.get("artifacts")
 if not artifacts:
     st.warning("Run analysis from **Home** first.")
-    st.page_link("Home.py", label="Go to Home")
+    st.page_link("app.py", label="Go to Home")
     st.stop()
 
 st.markdown("### Approve & Log")
