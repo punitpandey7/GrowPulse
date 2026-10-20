@@ -302,11 +302,7 @@ GrowPulse/
 
 ---
 
-## Acknowledgements
 
-Approval-flow and auditing patterns informed by
-[jaytech3/Soapbox](https://github.com/jaytech3/Soapbox); implemented independently
-for this project.
 
 ---
 
