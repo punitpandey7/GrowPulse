@@ -51,7 +51,7 @@ writes nothing. Email is drafted (`.eml` with `X-Unsent: 1`) — never sent.
 
 | Deliverable | Location |
 | --- | --- |
-| Web app (5 tabs, approval gate as buttons) | `streamlit run app.py` → http://localhost:8501 |
+| Web app (7 pages, approval gate as buttons) | `streamlit run app.py` → http://localhost:8501 |
 | Live deployment | [Streamlit Community Cloud](https://growpulse-hxa8i5rqh5gfbnapppppahwi.streamlit.app/) |
 | Reviews dataset (1,200 rows, quality-gated) | [data/groww_reviews.csv](data/groww_reviews.csv) |
 | Quality-gate fixture (100 rows, 8 injected problems) | [data/alt_reviews_test.csv](data/alt_reviews_test.csv) |
@@ -200,19 +200,28 @@ and token, a human approves, the second call with the token executes exactly onc
 
 ## Web app
 
-Five tabs, one shared header pattern, download buttons for every artefact:
+Seven pages built with `st.navigation`, one shared frame, download buttons for
+every artefact. The entrypoint (`app.py`) owns the sidebar controls and the
+pipeline run; each page lives in `views/`:
 
-| Tab | Contents |
+| Page | Contents |
 | --- | --- |
-| **Themes & Quotes** | Reviews-per-theme chart, *Where the pain is* ranking with 4v4 trend arrows, three verbatim quote cards with id/source/date |
-| **Weekly Pulse** | Word-count meter, live pass/fail checks (limit, quotes, actions, observation, fee named), rendered pulse, `.md` download |
-| **Fee Explainer** | Detected-fee banner with signal strength, format checks (bullets/links/date/no-advice), rendered snippet, `.md` download |
-| **Approve & Log** | MCP connection check (handshake only, zero side effects), payload previews, approve/reject buttons, live transcript with gate proofs, run history |
-| **Data Quality** | Per-check pass/fail table, drop counts, window/rating/source distributions, AI drafting log, server audit log |
+| **🏠 Home** | Hero, KPI cards (reviews, window, themes, fee confusion, pulse length), quick links, overview chips |
+| **📊 Insights** | Reviews-per-theme chart, *Where the pain is* ranking with 4v4 trend arrows, three verbatim quote cards with id/source/date |
+| **📝 Pulse** | Word-count meter, live pass/fail checks (limit, quotes, actions, observation, fee named), rendered pulse, `.md` download |
+| **💰 Fee Explainer** | Detected-fee banner with signal strength, format checks (bullets/links/date/no-advice), rendered snippet, `.md` download |
+| **🔐 Approve & Log** | MCP connection check (handshake only, zero side effects), payload previews, approve/reject buttons, live transcript with gate proofs, run history |
+| **📜 History** | Every recorded decision (approve/reject) and the append-only server audit log |
+| **🧪 Checks** | Per-check pass/fail table, drop counts, window/rating/source distributions, AI drafting log, server audit log |
+
+Navigation uses `st.navigation`, so `st.session_state["artifacts"]` survives
+page switches. (Switching pages by raw URL starts a *new* session and drops the
+run — which is why the nav widget, not plain links, is the way to move around.)
 
 The sidebar switches between the bundled 1,200-row corpus and your own CSV
-upload, sets the report week, and hides AI drafting behind *Advanced* — the
-default run is fully deterministic.
+upload, sets the report week (IST-aware so it reads correctly on Cloud, which
+runs in UTC), and hides AI drafting behind *Advanced* — the default run is
+fully deterministic.
 
 ---
 
@@ -248,7 +257,15 @@ default run is fully deterministic.
 
 ```
 GrowPulse/
-├── app.py                      # Streamlit web app (same pipeline as the CLI)
+├── app.py                      # Streamlit entrypoint: frame, sidebar controls, pipeline run
+├── views/                      # one file per page (st.navigation)
+│   ├── 01_home.py              #   🏠 hero, KPIs, quick links
+│   ├── 02_insights.py          #   📊 themes, pain ranking, quotes
+│   ├── 03_pulse.py             #   📝 weekly pulse + live checks
+│   ├── 04_fee_explainer.py     #   💰 fee explainer + checks
+│   ├── 05_approve.py           #   🔐 approval gate + MCP transcript
+│   ├── 06_history.py           #   📜 decisions + server audit log
+│   └── 07_checks.py            #   🧪 data-quality gate + distributions
 ├── data/
 │   ├── groww_reviews.csv       # 1,200-row demo corpus (Step 0 verified)
 │   └── alt_reviews_test.csv    # 100-row fixture with injected quality problems
