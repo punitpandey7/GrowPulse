@@ -1,7 +1,7 @@
-# GrowPulse 💹 — where Groww reviews go critical
+﻿# GrowPulse ðŸ’¹ â€” where Groww reviews go critical
 
-**Raw public customer reviews in → weekly product pulse + fee clarification out.**
-Nothing reaches an internal tool until a human approves it — and the approval is
+**Raw public customer reviews in â†’ weekly product pulse + fee clarification out.**
+Nothing reaches an internal tool until a human approves it â€” and the approval is
 enforced **inside the MCP server** with a single-use HMAC token, not by client
 courtesy. Email is drafted, never sent.
 
@@ -11,10 +11,10 @@ explanation for the charge users keep misreading.
 
 | Deliverable | Where |
 | --- | --- |
-| Working prototype (web) | `streamlit run app.py` → http://localhost:8501 |
+| Working prototype (web) | `streamlit run app.py` â†’ http://localhost:8501 |
 | Reviews CSV (500 rows, quality-gated) | [data/groww_reviews.csv](data/groww_reviews.csv) |
-| Weekly product pulse (≤250 words) | `output/weekly_pulse_<date>.md` |
-| Fee explainer (≤6 bullets, 2 official links) | `output/fee_explainer_<date>.md` |
+| Weekly product pulse (â‰¤250 words) | `output/weekly_pulse_<date>.md` |
+| Fee explainer (â‰¤6 bullets, 2 official links) | `output/fee_explainer_<date>.md` |
 | Notes doc snippet (appended via MCP) | [product_pulse/product_notes.md](product_pulse/product_notes.md) |
 | Email draft (`.md` + `.eml`, X-Unsent:1) | `output/drafts/` |
 | Source list (6 URLs) | [docs/SOURCES.md](docs/SOURCES.md) |
@@ -46,10 +46,10 @@ python scripts\generate_reviews.py      ::  regenerate/expand the corpus (seeded
 python src\mcp_client.py --payload output\mcp_payload.json --approve
 ```
 
-**Environment.** Copy `.env.example` → `.env` and fill in your Groq key.
-`.env` is gitignored — only the example is committed, so pushing this repo never
+**Environment.** Copy `.env.example` â†’ `.env` and fill in your Groq key.
+`.env` is gitignored â€” only the example is committed, so pushing this repo never
 ships a key. On Streamlit Community Cloud, paste the same lines into
-*App settings → Secrets* (`.streamlit/secrets.toml.example`). Without a key
+*App settings â†’ Secrets* (`.streamlit/secrets.toml.example`). Without a key
 everything still runs; the deterministic writers are the default and the LLM
 path validates its drafts and falls back automatically.
 
@@ -57,7 +57,7 @@ path validates its drafts and falls back automatically.
 
 **Two layers, and the one that matters is the server.**
 
-1. **Client layer** (`src/mcp_client.py`, and the 🔐 Approve & Log tab in the
+1. **Client layer** (`src/mcp_client.py`, and the ðŸ” Approve & Log tab in the
    app): shows the exact previews the server returned and asks a human `y/N`
    (or button click).
 2. **Server layer** (`src/mcp_server.py`): a `tools/call` **without** an
@@ -65,30 +65,30 @@ path validates its drafts and falls back automatically.
    `{status: "approval_required", approval_token, preview}` and writes nothing.
    The token is `HMAC-SHA256(per-process-secret, tool-name | canonical-arguments)`:
 
-   - **payload-bound** — approve one payload, then edit a single field → refused
+   - **payload-bound** â€” approve one payload, then edit a single field â†’ refused
      ("token does not match these exact arguments")
-   - **single-use** — replaying an executed token → refused ("token already used")
-   - **per-process secret** — tokens cannot survive a server restart
+   - **single-use** â€” replaying an executed token â†’ refused ("token already used")
+   - **per-process secret** â€” tokens cannot survive a server restart
 
 After approval each tool executes exactly once; every call (requested /
 executed / refused) lands in `output/mcp_audit_log.jsonl`, and the app shows the
 live transcript including the two gate proofs it runs in front of you.
 
-Tools exposed: `append_to_product_notes` (appends the structured entry — date,
+Tools exposed: `append_to_product_notes` (appends the structured entry â€” date,
 top themes, weekly pulse, identified fee issue, explanation bullets, source
-links — to `product_pulse/product_notes.md`) and `create_email_draft` (writes
+links â€” to `product_pulse/product_notes.md`) and `create_email_draft` (writes
 `.md` + `.eml` with `X-Unsent: 1`, so a mail client opens it as an editable
 draft; there is no send path in the codebase).
 
 ## 3. What fee issue the reviews identified
 
-**Exit load on mutual fund redemption** — detected from the data, not hard-coded.
-Every review is scanned for fee terms × explicit confusion signals ("never told",
-"hidden", "surprise", "no warning", "found out by googling"…), and charges are
-scored **mentions × confusion-rate** (raw volume alone always picks the
+**Exit load on mutual fund redemption** â€” detected from the data, not hard-coded.
+Every review is scanned for fee terms Ã— explicit confusion signals ("never told",
+"hidden", "surprise", "no warning", "found out by googling"â€¦), and charges are
+scored **mentions Ã— confusion-rate** (raw volume alone always picks the
 best-known charge; raw confusion-count picks charges two people mentioned).
 
-On the shipped 500-review corpus (2026-08-02 → 2026-10-18, all quality checks
+On the shipped 500-review corpus (2026-08-02 â†’ 2026-10-18, all quality checks
 green):
 
 | Fee | Mentions | Confused | Rate | Score |
@@ -98,30 +98,30 @@ green):
 | Intraday brokerage & statutory charges | 48 | 8 | 17% | 8.0 |
 
 Users redeem short-holding funds unaware the **scheme** (not Groww) deducts an
-exit load, discover it when the credited amount is below `NAV × units`, then
-open tickets. The generated explainer answers exactly that — what it is, when it
+exit load, discover it when the credited amount is below `NAV Ã— units`, then
+open tickets. The generated explainer answers exactly that â€” what it is, when it
 applies, how it is calculated, that an approximate amount is shown on the redeem
-screen — with two official Groww help-center links and a **Last checked** date.
+screen â€” with two official Groww help-center links and a **Last checked** date.
 
 ## 4. Data quality (Step 0)
 
 Before any analysis, the CSV passes a gate (`src/data_quality.py`): required
 fields present, no duplicate ids, **no duplicate content** (normalized-text
 match, so "Great app!!" and "great app" cannot both survive), parseable
-in-window dates, integer ratings 1–5, source whitelist, minimum text length,
+in-window dates, integer ratings 1â€“5, source whitelist, minimum text length,
 encoding artifacts. The report lands in `output/data_quality_report.json` and is
-shown in the app's 🧪 tab. The corpus itself is generated deterministically by
+shown in the app's ðŸ§ª tab. The corpus itself is generated deterministically by
 `scripts/generate_reviews.py` (seeded, uniqueness enforced) and re-checked by
 the same gate before it is written.
 
 ## 5. Optional AI drafting (Groq)
 
 `--llm` (CLI) or the sidebar checkbox (app) lets Groq draft the human-sounding
-parts — the key observation, the three action ideas, and the explainer bullets.
+parts â€” the key observation, the three action ideas, and the explainer bullets.
 Everything *counted* (themes, counts, verbatim quotes, the detected fee) stays
 computed and is fed to the model as an evidence pack. Drafts must pass
-validation (≤250 words, quotes unchanged and verbatim, computed numbers present,
-3–6 bullets, no advice words, no invented ₹ figures) — one retry with the failed
+validation (â‰¤250 words, quotes unchanged and verbatim, computed numbers present,
+3â€“6 bullets, no advice words, no invented â‚¹ figures) â€” one retry with the failed
 checks listed, then silent fallback to the deterministic writers. The key lives
 in memory for the tab / `.env` locally; it is never committed and never sent to
 anywhere but the provider you chose.
@@ -132,9 +132,9 @@ anywhere but the provider you chose.
 
 **Streamlit Community Cloud (free):**
 1. Push this repo to GitHub (see the remote already configured, or yours).
-2. Go to [share.streamlit.io](https://share.streamlit.io) → *Create app* → pick
+2. Go to [share.streamlit.io](https://share.streamlit.io) â†’ *Create app* â†’ pick
    the repo, `app.py` as the main file, Python 3.13.
-3. *App settings → Secrets* → paste the contents of `.env.example` with your
+3. *App settings â†’ Secrets* â†’ paste the contents of `.env.example` with your
    real values.
 4. Deploy. The MCP server runs as a subprocess of the app process on the
    container, so the approval gate works there exactly as it does locally.
@@ -146,11 +146,11 @@ real Gmail drafts via MCP, send me any ONE of these and I'll add it as another
 approval-gated tool in `src/mcp_server.py` (it would go through the same token
 gate):
 
-- **Gmail MCP server** — the command + OAuth client credentials (or run it
+- **Gmail MCP server** â€” the command + OAuth client credentials (or run it
   yourself and give me the launch command for `GMAIL_MCP_COMMAND`)
-- **Zapier MCP** — a connector token (Zapier's MCP endpoint supports Gmail
+- **Zapier MCP** â€” a connector token (Zapier's MCP endpoint supports Gmail
   draft actions)
-- **Make.com** — a scenario webhook URL that creates a Gmail draft
+- **Make.com** â€” a scenario webhook URL that creates a Gmail draft
 
 The env hooks already exist in `.env.example`; nothing sends without passing the
 same human approval.
@@ -159,29 +159,29 @@ same human approval.
 
 ```
 D:\Milestone5
-├── app.py                        # Streamlit UI (colorful; approval gate as buttons)
-├── data/groww_reviews.csv        # 500 clean reviews (Step 0 verified)
-├── docs/SOURCES.md               # 6 official source URLs
-├── product_pulse/product_notes.md# internal doc — entries appended via MCP only
-├── scripts/generate_reviews.py   # seeded corpus generator (uniqueness enforced)
-├── src/
-│   ├── data_quality.py           # Step 0 gate: dedupe, blanks, dates, ratings, sources
-│   ├── review_intelligence.py    # Step 1: 5-theme clustering, quotes, fee-confusion score
-│   ├── generators.py             # Steps 2+3: pulse ≤250w, explainer ≤6 bullets
-│   ├── llm.py                    # Groq client (stdlib urllib, .env loader)
-│   ├── ai_drafts.py              # checks-not-trust AI writer (validate → retry → fallback)
-│   ├── mcp_server.py             # MCP server: JSON-RPC stdio + server-side HMAC gate
-│   ├── mcp_client.py             # MCP client: previews, human decision, transcript
-│   └── workflow.py               # orchestrator (CLI + run_steps() used by the app)
-├── .env.example                  # copy to .env (gitignored) — never commit keys
-└── output/                       # all generated artifacts (gitignored)
+â”œâ”€â”€ app.py                        # Streamlit UI (colorful; approval gate as buttons)
+â”œâ”€â”€ data/groww_reviews.csv        # 500 clean reviews (Step 0 verified)
+â”œâ”€â”€ docs/SOURCES.md               # 6 official source URLs
+â”œâ”€â”€ product_pulse/product_notes.md# internal doc â€” entries appended via MCP only
+â”œâ”€â”€ scripts/generate_reviews.py   # seeded corpus generator (uniqueness enforced)
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ data_quality.py           # Step 0 gate: dedupe, blanks, dates, ratings, sources
+â”‚   â”œâ”€â”€ review_intelligence.py    # Step 1: 5-theme clustering, quotes, fee-confusion score
+â”‚   â”œâ”€â”€ generators.py             # Steps 2+3: pulse â‰¤250w, explainer â‰¤6 bullets
+â”‚   â”œâ”€â”€ llm.py                    # Groq client (stdlib urllib, .env loader)
+â”‚   â”œâ”€â”€ ai_drafts.py              # checks-not-trust AI writer (validate â†’ retry â†’ fallback)
+â”‚   â”œâ”€â”€ mcp_server.py             # MCP server: JSON-RPC stdio + server-side HMAC gate
+â”‚   â”œâ”€â”€ mcp_client.py             # MCP client: previews, human decision, transcript
+â”‚   â””â”€â”€ workflow.py               # orchestrator (CLI + run_steps() used by the app)
+â”œâ”€â”€ .env.example                  # copy to .env (gitignored) â€” never commit keys
+â””â”€â”€ output/                       # all generated artifacts (gitignored)
 ```
 
-- **Deterministic by default** — same CSV in, same pulse, same fee out; the LLM
+- **Deterministic by default** â€” same CSV in, same pulse, same fee out; the LLM
   only adds wording where a person would write, and cannot break limits.
-- **Traceable** — quotes are verbatim CSV text with id/source/date; every
+- **Traceable** â€” quotes are verbatim CSV text with id/source/date; every
   explainer bullet cites an official source; the approver sees the exact payload.
-- **Safe by construction** — server-side token gate, single-use, tamper-proof;
+- **Safe by construction** â€” server-side token gate, single-use, tamper-proof;
   email draft-only; notes append-only; rejections leave zero side effects.
 
 ---

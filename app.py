@@ -26,6 +26,17 @@ import streamlit as st
 REPO_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
+# Streamlit Community Cloud: pick up App settings -> Secrets (same KEY=VALUE
+# names as .env). Locally, .env (gitignored) or the sidebar paste box applies.
+# No secrets file present must never crash the app.
+try:
+    _secrets = st.secrets.to_dict()
+except Exception:
+    _secrets = {}
+for _k in ("GROQ_API_KEY", "GROQ_MODEL"):
+    if _secrets.get(_k):
+        os.environ.setdefault(_k, _secrets[_k])
+
 from workflow import run_steps          # noqa: E402
 from mcp_client import run_mcp_actions  # noqa: E402
 
@@ -96,7 +107,7 @@ with st.sidebar:
                              help="From your GROQ_API_KEY (kept in memory for this tab only). "
                                   "Leave empty to use the deterministic writers.")
     use_llm = st.checkbox("Use Groq to draft observation/actions/bullets", value=False)
-    llm_model = st.text_input("Groq model", value=os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"))
+    llm_model = st.text_input("Groq model", value=os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b"))
     if groq_key:
         os.environ["GROQ_API_KEY"] = groq_key  # session-only export for llm.py
 

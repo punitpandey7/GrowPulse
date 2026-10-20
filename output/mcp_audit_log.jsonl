@@ -7,3 +7,9 @@
 {"ts": "2026-10-20T23:26:02", "event": "executed", "tool": "create_email_draft", "detail": "Email draft created (not sent): draft-20261020-232602-Weekly-Product-Pulse---Customer-Clarific.md (+draft-20261020-232602-Weekly-Product-Pulse---Customer-Clarific.eml, X-Unsent:1)."}
 {"ts": "2026-10-20T23:26:02", "event": "refused", "tool": "append_to_product_notes", "detail": "token already used (replays are refused; request a fresh approval)"}
 {"ts": "2026-10-20T23:26:02", "event": "refused", "tool": "append_to_product_notes", "detail": "token does not match these exact arguments (payload edited or forged)"}
+{"ts": "2026-10-20T23:39:46", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-20T23:39:46", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-20T23:40:47", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-20T23:40:47", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-20T23:41:57", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-20T23:41:57", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}

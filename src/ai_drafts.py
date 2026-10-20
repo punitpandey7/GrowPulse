@@ -151,7 +151,9 @@ def _validate_explainer(text: str, allowed_figures: list[str]) -> tuple[list[str
         for w in ADVICE_WORDS:
             if w in low:
                 failures.append(f"advice-style wording '{w}' in: {b[:60]}...")
-        for fig in re.findall(r"\d[\d,.]*%?", b):
+        # strip list numbering ("1. ", "2) ", "- ") so ordinals are not scanned as figures
+        body = re.sub(r"^\s*(?:\d+[\.\)]|[-*])\s*", "", b)
+        for fig in re.findall(r"\d[\d,.]*%?", body):
             if fig.replace(",", "") not in [a.replace(",", "") for a in allowed_figures]:
                 # every digit-run must be a figure present in the evidence pack
                 failures.append(f"figure '{fig}' not found in source facts: {b[:60]}...")

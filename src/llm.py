@@ -22,7 +22,7 @@ import urllib.request
 from pathlib import Path
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
-DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+DEFAULT_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
@@ -68,7 +68,14 @@ def chat(user: str, system: str = "", model: str | None = None,
     req = urllib.request.Request(
         GROQ_URL,
         data=json.dumps(body).encode("utf-8"),
-        headers={"Authorization": f"Bearer {key}", "Content-Type": "application/json"},
+        headers={
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            # Groq's CDN (Cloudflare) blocks Python's default urllib signature with
+            # error 1010, so send an honest, identifiable User-Agent.
+            "User-Agent": "GrowPulse/2.0 (github.com/punitpandey7/GrowPulse)",
+            "Accept": "application/json",
+        },
         method="POST",
     )
     try:
