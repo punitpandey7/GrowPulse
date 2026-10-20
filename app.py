@@ -34,29 +34,33 @@ st.markdown(
     """
 <style>
     .block-container { padding-top: 1.0rem; padding-bottom: 2rem; max-width: 1200px; }
-    .stApp { background: radial-gradient(1200px 600px at 80% -10%, #F0F9FF 0%, #F8FAFC 55%, #F8FAFC 100%); }
+    .stApp { background: radial-gradient(1400px 700px at 10% -20%, #EEF6FF 0%, #F8FAFC 40%, #F7F9FC 100%); }
     header[data-testid="stHeader"] { background: transparent; }
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #F8FAFF 0%, #F6F8FB 100%); border-right: 1px solid #E6EBF5; }
     .gp-hero {
-        background: linear-gradient(90deg, rgba(37,99,235,0.10) 0%, rgba(14,165,233,0.06) 100%);
-        border: 1px solid rgba(37,99,235,0.28); border-radius: 14px;
-        padding: 18px 24px; margin: 0 0 14px 0;
+        background: linear-gradient(90deg, rgba(37,99,235,0.14) 0%, rgba(14,165,233,0.10) 60%, rgba(34,197,94,0.06) 100%);
+        border: 1px solid rgba(37,99,235,0.32); border-radius: 16px;
+        padding: 20px 26px; margin: 0 0 16px 0; box-shadow: 0 10px 40px -18px rgba(37,99,235,0.6);
     }
-    .gp-hero h1 { color: #0F172A; margin: 0; font-size: 1.95rem; font-weight: 700; letter-spacing: -.3px; }
-    .gp-hero p  { color: #475569; margin: 6px 0 0 0; font-size: .97rem; max-width: 820px; }
+    .gp-hero h1 { color: #0F172A; margin: 0; font-size: 2.0rem; font-weight: 700; letter-spacing: -.4px; }
+    .gp-hero p  { color: #334155; margin: 8px 0 0 0; font-size: .99rem; max-width: 860px; }
     .gp-card {
-        border-radius: 12px; padding: 14px 18px; background: #FFFFFF;
-        border: 1px solid #E5E7EB; border-top: 3px solid #2563EB;
-        box-shadow: 0 1px 1px rgba(15,23,42,0.01), 0 1px 2px rgba(15,23,42,0.02);
-        min-height: 100px; display: flex; flex-direction: column; justify-content: center;
+        border-radius: 14px; padding: 16px 20px; background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
+        border: 1px solid #E6EBF5; border-top: 3px solid #2563EB;
+        box-shadow: 0 10px 40px -20px rgba(15,23,42,0.9);
+        min-height: 104px; display: flex; flex-direction: column; justify-content: center;
     }
     .gp-card.teal   { border-top-color: #0EA5E9; }
     .gp-card.green  { border-top-color: #22C55E; }
     .gp-card.amber  { border-top-color: #F59E0B; }
     .gp-card.violet { border-top-color: #8B5CF6; }
-    .gp-card .num   { font-size: 1.7rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
-    .gp-card .lbl   { font-size: .82rem; color: #475569; margin-top: 4px; }
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 12px; border-color: #E5E7EB; }
-    div[data-testid="stMetricValue"] { font-size: 1.45rem; color: #0F172A; }
+    .gp-card .num   { font-size: 1.8rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
+    .gp-card .lbl   { font-size: .83rem; color: #475569; margin-top: 6px; }
+    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; border-color: #E6EBF5; background: #FFFFFF; box-shadow: 0 10px 40px -24px rgba(15,23,42,0.8); }
+    div[data-testid="stMetricValue"] { font-size: 1.5rem; color: #0F172A; }
+    [data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 { color: #0F172A; letter-spacing: -.2px; }
+    .stCaption { color: #475569 !important; }
+    .gp-chip { display: inline-block; padding: 2px 10px; margin: 0 6px 4px 0; border-radius: 999px; background: linear-gradient(90deg, rgba(37,99,235,0.10) 0%, rgba(14,165,233,0.08) 100%); border: 1px solid rgba(37,99,235,0.35); font-size: .76rem; color: #1E3A8A; }
 </style>
 """,
     unsafe_allow_html=True,
@@ -129,7 +133,18 @@ if run_clicked:
 
 artifacts = st.session_state.get("artifacts")
 if not artifacts:
-    st.info("Choose a data source and hit **Run analysis**. The sample corpus is already included.")
+    st.info("Start here: choose **Data source** in the sidebar → click **Run analysis**. Once results are ready, use the pages above to explore Insights, Pulse, Fee Explainer, Approve & Log, History and Checks.")
+    st.markdown("### What you'll get")
+    c1, c2, c3 = st.columns(3)
+    with c1, st.container(border=True):
+        st.markdown("**Themes & pain points**")
+        st.caption("Pain ranked by 1–2★ volume with 4-week trends and verbatim quotes.")
+    with c2, st.container(border=True):
+        st.markdown("**Weekly pulse**")
+        st.caption("≤250 words with top themes, quotes, key observation and 3 actions.")
+    with c3, st.container(border=True):
+        st.markdown("**Approval-gated MCP**")
+        st.caption("Notes doc + email draft only — never sent, enforced by server-side HMAC tokens.")
     st.stop()
 
 insights = artifacts["insights"]
