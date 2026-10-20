@@ -1,5 +1,5 @@
 {
-  "source_csv": "data/groww_reviews.csv",
+  "source_csv": "D:\\Milestone5\\data\\groww_reviews.csv",
   "review_window": {
     "start": "2026-08-02",
     "end": "2026-10-18",
