@@ -1,0 +1,4 @@
+# GrowPulse runtime dependencies
+# Core pipeline + MCP run on the Python standard library ONLY.
+# Streamlit is needed for the web app (app.py).
+streamlit>=1.41

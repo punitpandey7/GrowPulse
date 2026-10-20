@@ -1,0 +1,31 @@
+{
+  "total_input": 500,
+  "blank_dropped": 0,
+  "duplicate_id_dropped": 0,
+  "duplicate_text_dropped": 0,
+  "bad_date_dropped": 0,
+  "bad_rating_dropped": 0,
+  "unknown_source_dropped": 0,
+  "short_text_dropped": 0,
+  "encoding_flagged": 0,
+  "whitespace_normalized": 0,
+  "hard_failures": [],
+  "total_output": 500,
+  "rating_distribution": {
+    "2": 200,
+    "3": 134,
+    "1": 107,
+    "4": 40,
+    "5": 19
+  },
+  "source_distribution": {
+    "Google Play": 364,
+    "Trustpilot": 60,
+    "Twitter": 42,
+    "App Store": 34
+  },
+  "date_min": "2026-08-02",
+  "date_max": "2026-10-18",
+  "weeks_spanned": 11.0,
+  "clean": true
+}

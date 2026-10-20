@@ -1,0 +1,29 @@
+# --- secrets: NEVER commit --------------------------------------------------------
+.env
+.streamlit/secrets.toml
+
+# --- python ------------------------------------------------------------------------
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# --- generated run artifacts: committed as deliverables, regenerable ----------------
+output/*
+!output/weekly_pulse_*.md
+!output/fee_explainer_*.md
+!output/insights.json
+!output/mcp_payload.json
+!output/data_quality_report.json
+!output/approval_log.json
+!output/mcp_audit_log.jsonl
+!output/drafts
+output/drafts/*
+!output/drafts/*.md
+!output/drafts/*.eml
+
+# --- os / editor -------------------------------------------------------------------
+Thumbs.db
+.DS_Store
+.idea/
+.vscode/
