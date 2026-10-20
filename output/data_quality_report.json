@@ -1,5 +1,5 @@
 {
-  "total_input": 500,
+  "total_input": 1200,
   "blank_dropped": 0,
   "duplicate_id_dropped": 0,
   "duplicate_text_dropped": 0,
@@ -10,19 +10,19 @@
   "encoding_flagged": 0,
   "whitespace_normalized": 0,
   "hard_failures": [],
-  "total_output": 500,
+  "total_output": 1200,
   "rating_distribution": {
-    "2": 200,
-    "3": 134,
-    "1": 107,
-    "4": 40,
-    "5": 19
+    "2": 531,
+    "3": 318,
+    "1": 268,
+    "4": 62,
+    "5": 21
   },
   "source_distribution": {
-    "Google Play": 364,
-    "Trustpilot": 60,
-    "Twitter": 42,
-    "App Store": 34
+    "Google Play": 846,
+    "App Store": 77,
+    "Trustpilot": 151,
+    "Twitter": 126
   },
   "date_min": "2026-08-02",
   "date_max": "2026-10-18",

@@ -76,6 +76,7 @@ def run_steps(csv_path: str | Path, week_ending: str | None = None,
 
     # analysis needs datetime objects; keep dict rows as-is (analyzer re-reads list[dict])
     from review_intelligence import Review, cluster_reviews, detect_fee_confusion, pick_quote, MAX_THEMES, TOP_N_THEMES, NUM_QUOTES
+    from datetime import date as _date, timedelta
     reviews = [
         Review(review_id=r["review_id"], date=r["date"], source=r["source"], rating=r["rating"],
                review_text=r["review_text"], app_version=r.get("app_version", ""),
@@ -87,16 +88,35 @@ def run_steps(csv_path: str | Path, week_ending: str | None = None,
     say("\n" + "=" * 78)
     say("STEP 1 — REVIEW INTELLIGENCE")
     say("=" * 78)
+    # pain ranking: 1-2 star volume per theme + 4-week-over-4-week trend
+    end_d = max(_date.fromisoformat(r.date) for r in reviews)
+    start_d = min(_date.fromisoformat(r.date) for r in reviews)
+    window_days = (end_d - start_d).days
+    cut_recent = (end_d - timedelta(days=28)).isoformat()
+    cut_prev = (end_d - timedelta(days=56)).isoformat()
     clusters = cluster_reviews(reviews)
     theme_rows = []
     for theme, members in clusters.items():
         if theme == "Other":
             continue
+        low = [m for m in members if m.rating <= 2]
+        recent = sum(1 for m in low if m.date > cut_recent)
+        prev = sum(1 for m in low if cut_prev < m.date <= cut_recent)
+        delta_pct = round((recent - prev) / prev * 100) if prev else (100 if recent else 0)
         theme_rows.append({
             "theme": theme,
             "review_count": len(members),
             "share": round(len(members) / len(reviews), 2),
             "avg_rating": round(sum(m.rating for m in members) / len(members), 1),
+            "lowstar": len(low),
+            "lowstar_share": round(len(low) / len(members), 2),
+            "trend": {
+                "recent_4w": recent,
+                "prev_4w": prev,
+                "delta_pct": delta_pct,
+                "direction": "worse" if recent > prev else "better" if recent < prev else "flat",
+                "meaningful": window_days >= 56,  # need >=8 weeks for a fair 4v4 comparison
+            },
         })
     top_themes = theme_rows[:TOP_N_THEMES]
 
@@ -142,7 +162,7 @@ def run_steps(csv_path: str | Path, week_ending: str | None = None,
     for t in insights["themes"]:
         marker = "  <- TOP" if t in insights["top_themes"] else ""
         say(f"  - {t['theme']:<38} {t['review_count']:>3} reviews  avg {t['avg_rating']}★  "
-            f"share {t['share']*100:.0f}%{marker}")
+            f"share {t['share']*100:.0f}%  1-2★ {t['lowstar']:>3}{marker}")
 
     say(f"\nFee-confusion detection (score = mentions × confusion-rate) -> {fee_issue['fee']}")
     for row in fee_issue["mention_ranking"]:

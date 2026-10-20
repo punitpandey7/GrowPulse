@@ -1,64 +1,136 @@
 {
-  "source_csv": "D:\\Milestone5\\data\\groww_reviews.csv",
+  "source_csv": "data/groww_reviews.csv",
   "review_window": {
     "start": "2026-08-02",
     "end": "2026-10-18",
     "weeks": 11.0
   },
-  "total_reviews": 500,
+  "total_reviews": 1200,
   "themes_clustered": 5,
-  "other_count": 258,
+  "other_count": 543,
   "theme_cap": 5,
   "themes": [
     {
       "theme": "Charges & fee transparency",
-      "review_count": 116,
-      "share": 0.23,
-      "avg_rating": 2.3
+      "review_count": 342,
+      "share": 0.28,
+      "avg_rating": 2.2,
+      "lowstar": 228,
+      "lowstar_share": 0.67,
+      "trend": {
+        "recent_4w": 50,
+        "prev_4w": 60,
+        "delta_pct": -17,
+        "direction": "better",
+        "meaningful": true
+      }
     },
     {
       "theme": "Mutual fund & SIP experience",
-      "review_count": 92,
-      "share": 0.18,
-      "avg_rating": 2.1
+      "review_count": 276,
+      "share": 0.23,
+      "avg_rating": 2.0,
+      "lowstar": 209,
+      "lowstar_share": 0.76,
+      "trend": {
+        "recent_4w": 45,
+        "prev_4w": 69,
+        "delta_pct": -35,
+        "direction": "better",
+        "meaningful": true
+      }
     },
     {
       "theme": "App stability & performance",
-      "review_count": 15,
-      "share": 0.03,
-      "avg_rating": 1.7
+      "review_count": 19,
+      "share": 0.02,
+      "avg_rating": 1.7,
+      "lowstar": 16,
+      "lowstar_share": 0.84,
+      "trend": {
+        "recent_4w": 6,
+        "prev_4w": 5,
+        "delta_pct": 20,
+        "direction": "worse",
+        "meaningful": true
+      }
     },
     {
       "theme": "Customer support & resolution",
       "review_count": 12,
-      "share": 0.02,
-      "avg_rating": 1.4
+      "share": 0.01,
+      "avg_rating": 1.4,
+      "lowstar": 12,
+      "lowstar_share": 1.0,
+      "trend": {
+        "recent_4w": 3,
+        "prev_4w": 2,
+        "delta_pct": 50,
+        "direction": "worse",
+        "meaningful": true
+      }
     },
     {
       "theme": "Portfolio & reporting",
-      "review_count": 7,
+      "review_count": 8,
       "share": 0.01,
-      "avg_rating": 3.3
+      "avg_rating": 3.2,
+      "lowstar": 0,
+      "lowstar_share": 0.0,
+      "trend": {
+        "recent_4w": 0,
+        "prev_4w": 0,
+        "delta_pct": 0,
+        "direction": "flat",
+        "meaningful": true
+      }
     }
   ],
   "top_themes": [
     {
       "theme": "Charges & fee transparency",
-      "review_count": 116,
-      "share": 0.23,
-      "avg_rating": 2.3
+      "review_count": 342,
+      "share": 0.28,
+      "avg_rating": 2.2,
+      "lowstar": 228,
+      "lowstar_share": 0.67,
+      "trend": {
+        "recent_4w": 50,
+        "prev_4w": 60,
+        "delta_pct": -17,
+        "direction": "better",
+        "meaningful": true
+      }
     },
     {
       "theme": "Mutual fund & SIP experience",
-      "review_count": 92,
-      "share": 0.18,
-      "avg_rating": 2.1
+      "review_count": 276,
+      "share": 0.23,
+      "avg_rating": 2.0,
+      "lowstar": 209,
+      "lowstar_share": 0.76,
+      "trend": {
+        "recent_4w": 45,
+        "prev_4w": 69,
+        "delta_pct": -35,
+        "direction": "better",
+        "meaningful": true
+      }
     },
     {
       "theme": "App stability & performance",
-      "review_count": 15,
-      "share": 0.03,
-      "avg_rating": 1.7
+      "review_count": 19,
+      "share": 0.02,
+      "avg_rating": 1.7,
+      "lowstar": 16,
+      "lowstar_share": 0.84,
+      "trend": {
+        "recent_4w": 6,
+        "prev_4w": 5,
+        "delta_pct": 20,
+        "direction": "worse",
+        "meaningful": true
+      }
     }
   ],
   "quotes": [
@@ -72,11 +144,11 @@
     },
     {
       "theme": "Mutual fund & SIP experience",
-      "review_id": "G359",
-      "date": "2026-08-28",
+      "review_id": "G986",
+      "date": "2026-09-24",
       "source": "Google Play",
       "rating": 2,
-      "quote": "Redeemed my mutual fund for an emergency expense at 11 days and somewhere ₹487 vanished between shown and received. Support took days to even tell me it was exit load. Rest of the experience is genuinely smooth."
+      "quote": "My first mutual fund redemption did not add up and ₹836 was silently deducted before the credit. My CA had to explain this to me, the app never does. Please show the exit load on the redeem screen itself."
     },
     {
       "theme": "App stability & performance",
@@ -90,69 +162,73 @@
   "fee_issue": {
     "detected": true,
     "fee": "Exit load on mutual fund redemption",
-    "total_fee_mentions_all_types": 121,
-    "mentions": 52,
-    "confusion_mentions": 38,
+    "total_fee_mentions_all_types": 353,
+    "mentions": 119,
+    "confusion_mentions": 84,
     "share_of_fee_confusion": 0.62,
     "mention_ranking": [
       {
         "fee": "Exit load on mutual fund redemption",
-        "mentions": 52,
-        "confusion_mentions": 38,
-        "confusion_rate": 0.73,
-        "score": 38.0
+        "mentions": 119,
+        "confusion_mentions": 84,
+        "confusion_rate": 0.71,
+        "score": 84.0
       },
       {
         "fee": "DP (Depository Participant) charge",
-        "mentions": 21,
-        "confusion_mentions": 15,
-        "confusion_rate": 0.71,
-        "score": 15.0
+        "mentions": 50,
+        "confusion_mentions": 30,
+        "confusion_rate": 0.6,
+        "score": 30.0
       },
       {
         "fee": "Intraday brokerage & statutory charges",
-        "mentions": 48,
-        "confusion_mentions": 8,
-        "confusion_rate": 0.17,
-        "score": 8.0
+        "mentions": 184,
+        "confusion_mentions": 21,
+        "confusion_rate": 0.11,
+        "score": 21.0
       }
     ],
-    "first_seen": "2026-08-03",
-    "last_seen": "2026-10-16",
-    "first_half_mentions": 32,
-    "second_half_mentions": 20,
+    "first_seen": "2026-08-02",
+    "last_seen": "2026-10-17",
+    "first_half_mentions": 78,
+    "second_half_mentions": 41,
     "weekly_trend": [
       {
-        "week_starting": "2026-08-03",
-        "mentions": 8
-      },
-      {
-        "week_starting": "2026-08-10",
+        "week_starting": "2026-07-27",
         "mentions": 6
       },
       {
-        "week_starting": "2026-08-17",
-        "mentions": 4
+        "week_starting": "2026-08-03",
+        "mentions": 19
       },
       {
-        "week_starting": "2026-08-24",
+        "week_starting": "2026-08-10",
+        "mentions": 16
+      },
+      {
+        "week_starting": "2026-08-17",
         "mentions": 9
       },
       {
+        "week_starting": "2026-08-24",
+        "mentions": 21
+      },
+      {
         "week_starting": "2026-08-31",
-        "mentions": 5
+        "mentions": 7
       },
       {
         "week_starting": "2026-09-07",
-        "mentions": 4
+        "mentions": 7
       },
       {
         "week_starting": "2026-09-14",
-        "mentions": 5
+        "mentions": 7
       },
       {
         "week_starting": "2026-09-21",
-        "mentions": 2
+        "mentions": 7
       },
       {
         "week_starting": "2026-09-28",
@@ -160,27 +236,20 @@
       },
       {
         "week_starting": "2026-10-05",
-        "mentions": 3
+        "mentions": 9
       },
       {
         "week_starting": "2026-10-12",
-        "mentions": 1
+        "mentions": 6
       }
     ],
     "sample_confusion_quotes": [
       {
-        "review_id": "R069",
-        "date": "2026-10-09",
-        "source": "Google Play",
-        "rating": 3,
-        "quote": "Charged exit load on an arbitrage fund after 15 days. The fund page shows nothing obvious. Where do users learn about this?"
-      },
-      {
-        "review_id": "G097",
-        "date": "2026-10-11",
-        "source": "Google Play",
-        "rating": 2,
-        "quote": "Triggered a full redemption of my overnight fund yesterday ₹616 less arrived than the redemption estimate. Support took days to even tell me it was exit load. Transparency needs work here."
+        "review_id": "G862",
+        "date": "2026-10-15",
+        "source": "Trustpilot",
+        "rating": 1,
+        "quote": "Withdrew my money from a gold fund within 2 days ₹872 less arrived than the redemption estimate. I only found out by googling what exit load means. Better disclosure would prevent so many tickets."
       },
       {
         "review_id": "R074",
@@ -188,6 +257,13 @@
         "source": "Google Play",
         "rating": 2,
         "quote": "Redeemed units and exit load was deducted without any warning. Please add a confirmation screen that explains this deduction."
+      },
+      {
+        "review_id": "G1125",
+        "date": "2026-10-17",
+        "source": "Google Play",
+        "rating": 1,
+        "quote": "Redeemed my mutual fund for an emergency expense at 13 days and somewhere ₹177 vanished between shown and received. I only found out by googling what exit load means."
       }
     ]
   }

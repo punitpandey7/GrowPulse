@@ -13,3 +13,13 @@
 {"ts": "2026-10-20T23:40:47", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
 {"ts": "2026-10-20T23:41:57", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
 {"ts": "2026-10-20T23:41:57", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-20T23:54:54", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-20T23:54:54", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-20T23:55:40", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-20T23:55:40", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-21T00:00:35", "event": "approval_required", "tool": "append_to_product_notes", "detail": "args_keys=['date', 'explanation_bullets', 'identified_fee_issue', 'source_links', 'top_themes', 'weekly_pulse']"}
+{"ts": "2026-10-21T00:00:35", "event": "approval_required", "tool": "create_email_draft", "detail": "args_keys=['body', 'subject', 'to']"}
+{"ts": "2026-10-21T00:00:35", "event": "executed", "tool": "append_to_product_notes", "detail": "Appended week ending 2026-10-20 to D:\\Milestone5\\product_pulse\\product_notes.md (568 words added)."}
+{"ts": "2026-10-21T00:00:35", "event": "executed", "tool": "create_email_draft", "detail": "Email draft created (not sent): draft-20261021-000035-Weekly-Product-Pulse---Customer-Clarific.md (+draft-20261021-000035-Weekly-Product-Pulse---Customer-Clarific.eml, X-Unsent:1)."}
+{"ts": "2026-10-21T00:00:35", "event": "refused", "tool": "append_to_product_notes", "detail": "token already used (replays are refused; request a fresh approval)"}
+{"ts": "2026-10-21T00:00:35", "event": "refused", "tool": "append_to_product_notes", "detail": "token does not match these exact arguments (payload edited or forged)"}

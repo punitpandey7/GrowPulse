@@ -129,6 +129,30 @@ class MCPClient:
         self.proc.terminate()
 
 
+def check_connection() -> dict:
+    """Handshake + tools/list only — zero side effects (no tool is ever called).
+
+    Used by the Streamlit app's "Check MCP connection" button to prove the
+    server is reachable and its approval gate is active before a human decides.
+    """
+    client = MCPClient(REPO_ROOT / "src" / "mcp_server.py")
+    try:
+        info = client.initialize()
+        tools = client.list_tools()
+        return {
+            "ok": True,
+            "server": info.get("serverInfo", {}),
+            "protocol": info.get("protocolVersion"),
+            "tools": [t["name"] for t in tools],
+            "gate_active": bool(info.get("instructions")),
+            "instructions": info.get("instructions", ""),
+        }
+    except Exception as exc:  # noqa: BLE001 — report any failure, never raise into the UI
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"}
+    finally:
+        client.close()
+
+
 # --------------------------------------------------------------------------------------
 # Approval gate (client side: ask the human. server side: enforce the token)
 # --------------------------------------------------------------------------------------
