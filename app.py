@@ -1,7 +1,7 @@
 """
 GrowPulse — Streamlit app
 =========================
-Colorful, public-friendly UI for the full workflow:
+Colorful, user-friendly UI for the full workflow:
 
     data quality -> review intelligence -> weekly pulse -> fee explainer
     -> APPROVAL-GATED MCP actions (notes doc + email draft, never sent)
@@ -11,16 +11,16 @@ Deploy:  Streamlit Community Cloud — set GROQ_API_KEY in App settings -> Secre
 
 The CLI (src/workflow.py) and this app import the SAME pipeline, so the UI can
 never drift from the code the checks run against.
+
+Navigation uses st.navigation(): the entrypoint is a shared frame, so
+st.session_state["artifacts"] survives page switches (unlike raw URL links).
 """
 
 from __future__ import annotations
 
-import json
 import os
-import re
 import sys
-import tempfile
-from datetime import date
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import streamlit as st
@@ -39,134 +39,87 @@ for _k in ("GROQ_API_KEY", "GROQ_MODEL"):
     if _secrets.get(_k):
         os.environ.setdefault(_k, _secrets[_k])
 
-from workflow import run_steps            # noqa: E402
-from mcp_client import run_mcp_actions, check_connection  # noqa: E402
-
 st.set_page_config(page_title="GrowPulse", layout="wide",
                    initial_sidebar_state="expanded")
 
-# ----------------------------------------------------------------------------------
-# Styling — colorful, but aligned: all cards share height, panels share borders
-# ----------------------------------------------------------------------------------
-
+# ── Shared styling (applies to every page through the frame) ─────────────────
 st.markdown(
     """
 <style>
-    /* clean colorful canvas */
-    .block-container { padding-top: 1.2rem; padding-bottom: 2.5rem; max-width: 1240px; }
+    .block-container { padding-top: 1.6rem; padding-bottom: 2.5rem; max-width: 1240px; }
     .stApp { background: radial-gradient(1400px 700px at 10% -20%, #EEF6FF 0%, #F8FAFC 45%, #F7F9FC 100%); }
     header[data-testid="stHeader"] { background: transparent; }
     [data-testid="stSidebar"] { background: linear-gradient(180deg, #F8FAFF 0%, #F6F8FB 100%); border-right: 1px solid #E6EBF5; }
 
-    /* hero */
     .gp-hero {
-        background: linear-gradient(90deg, rgba(37,99,235,0.16) 0%, rgba(14,165,233,0.12) 60%, rgba(34,197,94,0.08) 100%);
-        border: 1px solid rgba(37,99,235,0.35); border-radius: 16px;
-        padding: 22px 28px; margin: 0 0 16px 0; box-shadow: 0 12px 40px -18px rgba(37,99,235,0.65);
+        background: linear-gradient(135deg, #FF6B6B 0%, #A06CD5 50%, #4ECDC4 100%);
+        border-radius: 18px; padding: 28px 32px; margin: 0 0 20px 0;
+        box-shadow: 0 12px 40px -12px rgba(160,108,213,0.5);
     }
-    .gp-hero h1 { color: #0F172A; margin: 0; font-size: 2.05rem; font-weight: 700; letter-spacing: -.4px; }
-    .gp-hero p  { color: #334155; margin: 8px 0 0 0; font-size: 1.0rem; max-width: 880px; }
+    .gp-hero h1 { color: #fff; margin: 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -.5px; text-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .gp-hero p  { color: #FFF7E6; margin: 10px 0 0 0; font-size: 1.05rem; max-width: 880px; }
 
-    /* KPI cards */
     .gp-card {
-        border-radius: 14px; padding: 16px 20px; background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
-        border: 1px solid #E6EBF5; border-top: 3px solid #2563EB;
-        box-shadow: 0 12px 40px -22px rgba(15,23,42,0.9);
-        min-height: 104px; display: flex; flex-direction: column; justify-content: center;
+        border-radius: 14px; padding: 18px 22px; background: #FFFFFF;
+        border: 1px solid #E6EBF5; border-top: 4px solid #FF6B6B;
+        box-shadow: 0 4px 20px -8px rgba(15,23,42,0.12);
+        min-height: 108px; display: flex; flex-direction: column; justify-content: center;
     }
-    .gp-card.teal   { border-top-color: #0EA5E9; }
+    .gp-card.teal   { border-top-color: #4ECDC4; }
+    .gp-card.yellow { border-top-color: #FFE66D; }
+    .gp-card.purple { border-top-color: #A06CD5; }
     .gp-card.green  { border-top-color: #22C55E; }
-    .gp-card.amber  { border-top-color: #F59E0B; }
-    .gp-card.violet { border-top-color: #8B5CF6; }
-    .gp-card .num   { font-size: 1.8rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
-    .gp-card .lbl   { font-size: .83rem; color: #475569; margin-top: 6px; }
+    .gp-card .num   { font-size: 1.9rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
+    .gp-card.teal   .num { color: #0D9488; }
+    .gp-card.yellow .num { color: #B45309; }
+    .gp-card.purple .num { color: #7C3AED; }
+    .gp-card.green  .num { color: #16A34A; }
+    .gp-card .lbl   { font-size: .85rem; color: #475569; margin-top: 6px; }
 
-    .gp-quote {
-        border-left: 3px solid #2563EB; border-radius: 12px;
-        background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
-        border-top: 1px solid #E6EBF5; border-right: 1px solid #E6EBF5; border-bottom: 1px solid #E6EBF5;
-        padding: 14px 16px; min-height: 176px; font-size: .94rem; line-height: 1.55; color: #1F2937;
-        box-shadow: 0 12px 40px -24px rgba(15,23,42,0.85);
-    }
-    .gp-quote .src  { font-size: .76rem; color: #6B7280; margin-top: 10px; }
+    .gp-quote { border-left: 4px solid #4ECDC4; border-radius: 12px; background: #FFFFFF; border: 1px solid #E6EBF5; padding: 16px 18px; min-height: 172px; font-size: .94rem; line-height: 1.55; color: #1F2937; box-shadow: 0 4px 20px -10px rgba(15,23,42,0.12); }
+    .gp-quote .src { font-size: .78rem; color: #6B7280; margin-top: 10px; }
 
-    .gp-banner {
-        border-radius: 12px; padding: 14px 18px; margin: 6px 0 12px 0;
-        background: linear-gradient(90deg, rgba(245,158,11,0.14) 0%, rgba(251,191,36,0.10) 100%);
-        border: 1px solid rgba(245,158,11,0.5); color: #92400E;
-        font-size: .94rem;
-    }
+    .gp-banner { border-radius: 14px; padding: 16px 20px; margin: 8px 0 16px 0; background: linear-gradient(90deg, rgba(245,158,11,0.14) 0%, rgba(251,191,36,0.10) 100%); border: 1px solid rgba(245,158,11,0.45); font-size: .95rem; color: #92400E; }
     .gp-banner b { color: #92400E; }
 
-    .gp-chip {
-        display: inline-block; padding: 3px 12px; margin: 0 6px 6px 0; border-radius: 999px;
-        background: linear-gradient(90deg, rgba(37,99,235,0.12) 0%, rgba(14,165,233,0.10) 100%);
-        border: 1px solid rgba(37,99,235,0.4); font-size: .77rem; color: #1E3A8A;
-    }
+    .gp-chip { display: inline-block; padding: 4px 14px; margin: 0 8px 8px 0; border-radius: 999px; background: linear-gradient(90deg, rgba(37,99,235,0.10) 0%, rgba(14,165,233,0.08) 100%); border: 1px solid rgba(37,99,235,0.30); font-size: .8rem; color: #1E3A8A; font-weight: 500; }
+    .gp-chip.pass { background: linear-gradient(90deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.08) 100%); border-color: rgba(34,197,94,0.40); color: #166534; }
+    .gp-chip.fail { background: linear-gradient(90deg, rgba(239,68,68,0.12) 0%, rgba(220,38,38,0.08) 100%); border-color: rgba(239,68,68,0.40); color: #991B1B; }
 
-    /* Streamlit internals */
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; border-color: #E6EBF5; background: #FFFFFF; box-shadow: 0 12px 40px -26px rgba(15,23,42,0.85); overflow: visible; }
-    div[data-testid="stTabs"] button[data-baseweb="tab"] { font-weight: 600; padding-top: 8px; padding-bottom: 8px; }
-    div[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: 6px; flex-wrap: wrap; }
+    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; border-color: #E6EBF5; background: #FFFFFF; box-shadow: 0 4px 20px -10px rgba(15,23,42,0.10); }
+    div[data-testid="stTabs"] button[data-baseweb="tab"] { font-weight: 600; }
     div[data-testid="stMetricValue"] { font-size: 1.5rem; color: #0F172A; }
     div[data-testid="stProgress"] div[data-testid="stProgressBar"] > div { background-color: #2563EB; }
     [data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 { color: #0F172A; letter-spacing: -.2px; }
     .stCaption { color: #475569 !important; }
-
-    .gp-banner {
-        border-radius: 10px; padding: 13px 16px; margin: 4px 0 10px 0;
-        background: #F7F8FA; border: 1px solid #E6E9ED; border-left: 3px solid #0D9488;
-        font-size: .93rem; color: #374151;
-    }
-    .gp-banner b { color: #0B7A70; }
-
-    .gp-chip {
-        display: inline-block; padding: 2px 10px; margin: 0 6px 4px 0; border-radius: 999px;
-        background: #F3F4F6; border: 1px solid #E5E7EB; font-size: .76rem; color: #4B5563;
-    }
-
-    /* Streamlit internals: soft borders, dark metric values */
-    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 10px; border-color: #E6E9ED; }
-    div[data-testid="stMetricValue"] { font-size: 1.45rem; color: #101418; }
-    div[data-testid="stProgress"] div[data-testid="stProgressBar"] > div { background-color: #0D9488; }
-
-    h3 { margin-bottom: .15rem; }
 </style>
-    """,
+""",
     unsafe_allow_html=True,
 )
 
+# ── Pages ────────────────────────────────────────────────────────────────────
+# st.navigation keeps st.session_state alive across page switches. Switching by
+# raw URL would create a new session and lose the run artifacts — the bug that
+# made Insights/Pulse/... look broken after an analysis.
 
-def kpi(num: str, label: str, color: str = "") -> str:
-    cls = "gp-card " + color if color else "gp-card"
-    return f'<div class="{cls}"><div class="num">{num}</div><div class="lbl">{label}</div></div>'
+pages = [
+    st.Page("views/01_home.py", title="Home", icon="🏠", default=True),
+    st.Page("views/02_insights.py", title="Insights", icon="📊"),
+    st.Page("views/03_pulse.py", title="Pulse", icon="📝"),
+    st.Page("views/04_fee_explainer.py", title="Fee Explainer", icon="💰"),
+    st.Page("views/05_approve.py", title="Approve & Log", icon="🔐"),
+    st.Page("views/06_history.py", title="History", icon="📜"),
+    st.Page("views/07_checks.py", title="Checks", icon="🧪"),
+]
 
+nav = st.navigation(pages, position="sidebar")
 
-def tab_header(title: str, subtitle: str, download: tuple | None = None) -> None:
-    """Same header pattern on every tab: title + caption left, action right."""
-    left, right = st.columns([4.6, 1.1], vertical_alignment="bottom")
-    with left:
-        st.markdown(f"### {title}")
-        st.caption(subtitle)
-    with right:
-        if download:
-            label, data, filename = download
-            st.download_button(label, data, file_name=filename, mime="text/markdown",
-                               use_container_width=True)
-
-
-def chip_row(items: list[str]) -> None:
-    st.markdown("".join(f'<span class="gp-chip">{i}</span>' for i in items), unsafe_allow_html=True)
-
-
-# ----------------------------------------------------------------------------------
-# Sidebar — data source first, advanced/AI tucked away (deterministic is the default)
-# ----------------------------------------------------------------------------------
+# ── Sidebar controls (shared across every page) ──────────────────────────────
 
 with st.sidebar:
-    st.markdown("Controls")
+    st.markdown("## ⚙️ Controls")
 
-    st.markdown("**Data source**")
+    st.markdown("**📦 Data source**")
     source = st.radio("Reviews data", ["Sample dataset (1,200 Groww reviews)", "Upload my CSV"],
                       label_visibility="collapsed")
     uploaded = None
@@ -175,11 +128,18 @@ with st.sidebar:
                                     type="csv",
                                     help="Extra columns are ignored. Bad rows (blanks, duplicates, "
                                          "bad dates/ratings, unknown sources, too-short text) are "
-                                         "dropped and reported in the Data Quality tab.")
-    st.date_input("Report week ending", value=date.today(), key="week_ending")
+                                         "dropped and reported in the Checks page.")
+
+    # Streamlit Community Cloud runs in UTC, so date.today() there can be a day
+    # behind the user's local date. Prefer IST (the review corpus and audience are
+    # India-based) so the "week ending" reads correctly for the team.
+    _IST = timezone(timedelta(hours=5, minutes=30))
+    _default_end = datetime.now(_IST).date()
+    week_ending = st.date_input("📅 Report week ending", value=_default_end, key="week_ending")
+    st.caption("Used in the pulse, the fee explainer's “Last checked” and the MCP log date.")
 
     st.divider()
-    with st.expander("Advanced — AI drafting (optional)", expanded=False):
+    with st.expander("🤖 Advanced — AI drafting (optional)", expanded=False):
         st.caption("The deterministic writers are the default. Add a Groq key to let an LLM "
                    "draft the observation, action ideas and explainer bullets — every draft is "
                    "validated against the data and silently falls back if it fails.")
@@ -196,24 +156,15 @@ with st.sidebar:
         st.caption("AI drafting: **off** (deterministic writers)")
 
     st.divider()
-    run_clicked = st.button("Run analysis", type="primary", use_container_width=True)
+    run_clicked = st.button("🚀 Run analysis", type="primary", use_container_width=True)
 
-# ----------------------------------------------------------------------------------
-# Hero
-# ----------------------------------------------------------------------------------
-
-st.markdown(
-    '<div class="gp-hero"><h1>GrowPulse</h1>'
-    "<p>Raw Groww reviews in — weekly product pulse, fee clarification and an "
-    "approval-gated MCP log out. Nothing is written without a human sign-off.</p></div>",
-    unsafe_allow_html=True,
-)
-
-# ----------------------------------------------------------------------------------
-# Pipeline run (identical code path as the CLI)
-# ----------------------------------------------------------------------------------
+# ── Pipeline run (identical code path as the CLI) ────────────────────────────
 
 if run_clicked:
+    import tempfile
+
+    from workflow import run_steps
+
     with st.spinner("Checking data quality, clustering themes, drafting outputs ..."):
         try:
             if uploaded is not None:
@@ -222,7 +173,7 @@ if run_clicked:
                     csv_path = tf.name
             else:
                 csv_path = str(REPO_ROOT / "data" / "groww_reviews.csv")
-            artifacts = run_steps(csv_path, week_ending=st.session_state["week_ending"].isoformat(),
+            artifacts = run_steps(csv_path, week_ending=week_ending.isoformat(),
                                   use_llm=use_llm, llm_model=llm_model or None, verbose=False)
             st.session_state["artifacts"] = artifacts
             st.session_state.pop("mcp_outcome", None)
@@ -231,305 +182,6 @@ if run_clicked:
         except Exception as exc:
             st.exception(exc)
 
-artifacts = st.session_state.get("artifacts")
-if not artifacts:
-    st.info("Choose a data source and hit **Run analysis**. The sample corpus is already included.")
-    st.stop()
+# ── Render the selected page ─────────────────────────────────────────────────
 
-insights = artifacts["insights"]
-fee = insights["fee_issue"]
-dq = artifacts["dq"]
-
-# ----------------------------------------------------------------------------------
-# KPI row
-# ----------------------------------------------------------------------------------
-
-top = insights["top_themes"][0] if insights["top_themes"] else {"theme": "—"}
-c1, c2, c3, c4, c5 = st.columns(5)
-c1.markdown(kpi(f"{insights['total_reviews']:,}", "Clean reviews analysed", "violet"), unsafe_allow_html=True)
-c2.markdown(kpi(f"{insights['review_window']['weeks']}w",
-                f"{insights['review_window']['start']} → {insights['review_window']['end']}", "teal"),
-            unsafe_allow_html=True)
-c3.markdown(kpi(str(insights["themes_clustered"]), f"themes · top: {top['theme']}", "green"),
-            unsafe_allow_html=True)
-c4.markdown(kpi(f"{fee['confusion_mentions']}/{fee['mentions']}",
-                f"confused about {fee['fee'].split(' ')[0].lower()} load", "amber"), unsafe_allow_html=True)
-c5.markdown(kpi(f"{artifacts['pulse_wc']}/250", "words in the weekly pulse", "teal"),
-            unsafe_allow_html=True)
-st.caption(f"Source: `{Path(insights['source_csv']).name}` · quality gate "
-           f"{dq['total_input']:,} → {dq['total_output']:,} clean rows")
-
-tab_themes, tab_pulse, tab_fee, tab_gate, tab_dq = st.tabs(
-    ["Themes & Quotes", "Weekly Pulse", "Fee Explainer", "Approve & Log", "Data Quality"]
-)
-
-# ----------------------------------------------------------------------------------
-# Tab 1 — themes & quotes
-# ----------------------------------------------------------------------------------
-
-with tab_themes:
-    tab_header("Theme breakdown", f"{insights['total_reviews']:,} reviews clustered into "
-                                  f"{insights['themes_clustered']} themes (strongest match wins)")
-    left, right = st.columns([3, 2], gap="large")
-    with left, st.container(border=True):
-        st.markdown("**Reviews per theme**")
-        chart_data = {t["theme"]: t["review_count"] for t in insights["themes"]}
-        if insights.get("other_count"):
-            chart_data["(unclustered)"] = insights["other_count"]
-        st.bar_chart(chart_data, height=300)
-        st.caption("Reviews that match no theme stay unclustered — a bucket that absorbs "
-                   "everything stops being a signal.")
-    with right, st.container(border=True):
-        st.markdown("**Where the pain is** — ranked by 1-2★ volume")
-        pain = sorted(insights["themes"],
-                      key=lambda t: (-t.get("lowstar", 0), -t["review_count"]))
-        for i, t in enumerate(pain, 1):
-            tr = t.get("trend") or {}
-            st.markdown(f"**{i}. {t['theme']}**")
-            base = (f"{t.get('lowstar', 0)} of {t['review_count']} reviews are 1-2★ "
-                    f"({t.get('lowstar_share', 0) * 100:.0f}%)")
-            if tr.get("meaningful"):
-                arrow = {"worse": "▲", "better": "▼", "flat": "→"}.get(tr["direction"], "→")
-                st.caption(f"{base} · last 4w {arrow} {tr['recent_4w']} vs {tr['prev_4w']} before "
-                           f"({tr['delta_pct']:+d}%) — {tr['direction']}")
-            else:
-                st.caption(f"{base} · trend n/a (needs an 8+ week window)")
-            if i < len(pain):
-                st.divider()
-        st.caption("Ranked by the number of 1-2 star reviews, not by theme size — a big happy "
-                   "theme outranks nothing here. Trend compares the last 4 weeks with the 4 before.")
-
-    st.markdown("#### Verbatim quotes")
-    st.caption("Untouched review text — each quote carries its id, source and date.")
-    qcols = st.columns(3, gap="medium")
-    for i, q in enumerate(insights["quotes"]):
-        with qcols[i % 3]:
-            st.markdown(
-                f'<div class="gp-quote">“{q["quote"]}”'
-                f'<div class="src">— {q["theme"]}<br>{q["source"]}, {q["rating"]}★, '
-                f'{q["date"]}<br>id {q["review_id"]}</div></div>',
-                unsafe_allow_html=True,
-            )
-
-# ----------------------------------------------------------------------------------
-# Tab 2 — weekly pulse
-# ----------------------------------------------------------------------------------
-
-with tab_pulse:
-    tab_header("Weekly product pulse", "Internal · top themes, verbatim quotes, one key "
-                                       "observation, three action ideas · ≤250 words",
-               download=("Download .md", artifacts["pulse"],
-                         f"weekly_pulse_{artifacts['week_ending']}.md"))
-    chip_row([f"Week ending {artifacts['week_ending']}",
-              f"{artifacts['pulse_wc']} / 250 words",
-              f"{insights['total_reviews']:,} reviews",
-              "Audience: product + support"])
-    st.progress(min(artifacts["pulse_wc"] / 250, 1.0), text=f"{artifacts['pulse_wc']} / 250 words")
-
-    # live checks — every constraint verified by code against the actual text
-    pulse_text = artifacts["pulse"]
-    quote_hits = sum(1 for q in insights["quotes"] if q["quote"] in pulse_text)
-    n_actions = len(re.findall(r"(?m)^\d+\.\s", pulse_text))
-    fee_named = (not fee.get("detected")) or (fee["fee"] in pulse_text)
-    checks = [
-        (f"within 250 words ({artifacts['pulse_wc']}/250)", artifacts["pulse_wc"] <= 250),
-        (f"{quote_hits}/{len(insights['quotes'])} quotes verbatim in text",
-         quote_hits == len(insights["quotes"])),
-        (f"{n_actions} numbered action ideas", n_actions >= 3),
-        ("key observation present", "**Key observation:**" in pulse_text),
-        ("detected fee named", fee_named),
-    ]
-    with st.container(border=True):
-        st.markdown(f"**{'✅' if all(ok for _, ok in checks) else '❌'} Live checks** "
-                    "(counted by code against the rendered text)")
-        chip_row([f"{'✅' if ok else '❌'} {name}" for name, ok in checks])
-        if not all(ok for _, ok in checks):
-            st.error("One or more checks failed — fix before shipping this pulse.")
-    with st.container(border=True):
-        st.markdown(artifacts["pulse"])
-
-# ----------------------------------------------------------------------------------
-# Tab 3 — fee explainer
-# ----------------------------------------------------------------------------------
-
-with tab_fee:
-    tab_header("Fee explainer", "Customer-facing support snippet · facts only, no advice · "
-                                "≤6 bullets, 2 official links, last-checked date",
-               download=("Download .md", artifacts["explainer"]["markdown"],
-                         f"fee_explainer_{artifacts['week_ending']}.md"))
-    st.markdown(
-        f'<div class="gp-banner">Detected from the reviews: <b>{fee["fee"]}</b> — '
-        f'{fee["mentions"]} mentions, {fee["confusion_mentions"]} carrying explicit confusion '
-        f'signals ({fee["confusion_mentions"]/max(fee["mentions"],1):.0%} of mentions). '
-        f'Detection score {fee["mention_ranking"][0]["score"]:.1f} '
-        f'(mentions × confusion-rate).</div>',
-        unsafe_allow_html=True,
-    )
-    chip_row([f"{len(artifacts['explainer']['bullets'])} / 6 bullets",
-              f"{len(artifacts['explainer']['source_links'])} official sources",
-              f"Last checked {artifacts['week_ending']}"])
-    with st.container(border=True):
-        st.markdown(artifacts["explainer"]["markdown"])
-
-    exp = artifacts["explainer"]
-    exp_md = exp["markdown"]
-    rate = fee["confusion_mentions"] / max(fee["mentions"], 1)
-    strength = "strong" if rate >= 0.6 else "moderate" if rate >= 0.3 else "weak"
-    fee_checks = [
-        (f"{len(exp['bullets'])} / 6 bullets", 1 <= len(exp["bullets"]) <= 6),
-        (f"{len(exp['source_links'])} / 2 official links", len(exp["source_links"]) >= 2),
-        ("last-checked date present", artifacts["week_ending"] in exp_md),
-        ("no advice language",
-         not re.search(r"we recommend|you should (buy|sell|invest)|guaranteed returns",
-                       exp_md, re.I)),
-    ]
-    chip_row([f"{'✅' if ok else '❌'} {name}" for name, ok in fee_checks])
-    st.caption(f"Confusion signal: **{strength}** — {rate:.0%} of the {fee['mentions']} fee "
-               f"mentions carry explicit confusion language; treat this as the best-supported "
-               f"fee guess, not a measured majority. Every bullet is tied to an official "
-               f"Groww/AMFI source and is reusable verbatim in tickets and chats.")
-
-# ----------------------------------------------------------------------------------
-# Tab 4 — approval gate + MCP
-# ----------------------------------------------------------------------------------
-
-with tab_gate:
-    tab_header("Approval gate", "The MCP server refuses to write until it receives a single-use "
-                                "token bound to the exact payload. Email is drafted, never sent.")
-    payload = artifacts["payload"]
-
-    # zero-side-effect connectivity probe (handshake + tools/list, never a tool call)
-    if st.button("Check MCP connection", help="Handshake + tools/list only — no tool is called, nothing is written"):
-        with st.spinner("Connecting to the MCP server ..."):
-            st.session_state["mcp_conn"] = check_connection()
-    conn = st.session_state.get("mcp_conn")
-    if conn is not None:
-        if conn["ok"]:
-            st.success(f"Connected — **{conn['server'].get('name', 'growpulse-mcp')}** "
-                       f"v{conn['server'].get('version', '?')} · tools: "
-                       f"`{', '.join(conn['tools'])}` · approval gate "
-                       f"{'ACTIVE' if conn['gate_active'] else 'state unknown'}")
-        else:
-            st.error(f"Connection failed: {conn['error']}")
-
-    p1, p2 = st.columns(2, gap="large")
-    with p1, st.container(border=True):
-        st.markdown("**Tool 1 · `append_to_product_notes`**")
-        a = payload["arguments"]["append_to_product_notes"]
-        st.code(f"date: {a['date']}\n"
-                + "top_themes: " + ", ".join(f"{t['theme']} ({t['review_count']})" for t in a["top_themes"])
-                + f"\nweekly_pulse: {len(a['weekly_pulse'].split())} words"
-                + f"\nidentified_fee_issue: {a['identified_fee_issue']['fee']} "
-                  f"({a['identified_fee_issue']['mentions']} mentions)"
-                + f"\nexplanation_bullets: {len(a['explanation_bullets'])}"
-                + f"\nsource_links: {len(a['source_links'])}", language="text")
-    with p2, st.container(border=True):
-        st.markdown("**Tool 2 · `create_email_draft`** (never sends)")
-        b = payload["arguments"]["create_email_draft"]
-        st.code(f"to: {b['to']}\nsubject: {b['subject']}\n"
-                f"body: {len(b['body'].split())} words (pulse + support snippet)", language="text")
-
-    outcome = st.session_state.get("mcp_outcome")
-    left, right = st.columns(2, gap="large")
-    approve = left.button("Approve & execute via MCP", type="primary",
-                          disabled=outcome is not None, use_container_width=True)
-    reject = right.button("Reject — write nothing", disabled=outcome is not None,
-                          use_container_width=True)
-
-    if approve or reject:
-        with st.spinner("Talking to the MCP server ..." if approve else "Recording rejection ..."):
-            st.session_state["mcp_outcome"] = run_mcp_actions(
-                payload, decision="approve" if approve else "reject",
-                verbose=False, prove_gate=approve)
-            outcome = st.session_state["mcp_outcome"]
-
-    if outcome is not None:
-        if outcome["approved"]:
-            st.success("Approved — both tools executed exactly once.")
-            for r in outcome["results"]:
-                st.markdown(f"**`{r['tool']}`** → {r['result']}")
-            d1, d2 = st.columns(2, gap="large")
-            notes = (REPO_ROOT / "product_pulse" / "product_notes.md").read_text(encoding="utf-8")
-            with d1, st.container(border=True):
-                st.markdown("**Notes doc — last appended entry**")
-                chunks = notes.split("\n---\n")
-                st.code(chunks[-1].strip() if chunks else notes[-2000:], language="markdown")
-            with d2, st.container(border=True):
-                st.markdown("**Email draft — created, not sent**")
-                drafts = sorted((REPO_ROOT / "output" / "drafts").glob("*.md"))
-                if drafts:
-                    st.code(drafts[-1].read_text(encoding="utf-8")[:2400], language="markdown")
-                    eml = drafts[-1].with_suffix(".eml")
-                    if eml.exists():
-                        st.download_button("Download .eml (X-Unsent: 1)", eml.read_bytes(),
-                                           file_name=eml.name, mime="message/rfc822")
-        else:
-            st.error("Rejected — no MCP tool was executed and nothing was written.")
-
-        n_events = len(outcome["transcript"])
-        with st.expander(f"Live MCP transcript — {n_events} events", expanded=outcome["approved"]):
-            for line in outcome["transcript"]:
-                detail = f" — {line['detail']}" if line.get("detail") else ""
-                st.markdown(f"`{line['dir']} {line['kind']}` **{line['tool']}** → "
-                            f"`{line['status']}`{detail}")
-
-    approval_log = REPO_ROOT / "output" / "approval_log.json"
-    if approval_log.exists():
-        try:
-            entries = json.loads(approval_log.read_text(encoding="utf-8"))
-        except (json.JSONDecodeError, OSError):
-            entries = []
-        with st.expander(f"Run history — {len(entries)} recorded decisions", expanded=False):
-            for e in reversed(entries[-15:]):
-                st.markdown(f"- `{e.get('timestamp', '?')}` — **{e.get('decision', '?')}** · "
-                            f"{', '.join(e.get('tools_requested', []))}")
-            st.caption("output/approval_log.json (written by the client) · "
-                       "output/mcp_audit_log.jsonl (append-only, written by the server)")
-
-# ----------------------------------------------------------------------------------
-# Tab 5 — data quality
-# ----------------------------------------------------------------------------------
-
-with tab_dq:
-    tab_header("Data quality gate", "Step 0 runs before every analysis; offending rows are "
-                                    "dropped and counted, never silently kept.")
-    checks = [
-        ("Rows in → clean out", f"{dq['total_input']:,} → {dq['total_output']:,}",
-         dq["total_output"] == dq["total_input"]),
-        ("Blank required fields dropped", dq["blank_dropped"], dq["blank_dropped"] == 0),
-        ("Duplicate review_id dropped", dq["duplicate_id_dropped"], dq["duplicate_id_dropped"] == 0),
-        ("Duplicate content dropped", dq["duplicate_text_dropped"], dq["duplicate_text_dropped"] == 0),
-        ("Bad dates dropped", dq["bad_date_dropped"], dq["bad_date_dropped"] == 0),
-        ("Invalid ratings dropped", dq["bad_rating_dropped"], dq["bad_rating_dropped"] == 0),
-        ("Unknown sources dropped", dq["unknown_source_dropped"], dq["unknown_source_dropped"] == 0),
-        ("Too-short text dropped", dq["short_text_dropped"], dq["short_text_dropped"] == 0),
-        ("Encoding artifacts flagged", dq["encoding_flagged"], dq["encoding_flagged"] == 0),
-    ]
-    left, right = st.columns([1.2, 1], gap="large")
-    with left, st.container(border=True):
-        st.markdown("**Checks**")
-        for name, val, ok in checks:
-            st.markdown(f"{'✅' if ok else '❌'} {name} — `{val}`")
-    with right, st.container(border=True):
-        st.markdown("**Distributions**")
-        st.markdown(f"**Window** {dq['date_min']} → {dq['date_max']} (~{dq['weeks_spanned']} weeks)")
-        st.markdown("**Ratings**")
-        for star in sorted(dq.get("rating_distribution", {}), reverse=True):
-            st.markdown(f"- {star}★ · {dq['rating_distribution'][star]}")
-        st.markdown("**Sources**")
-        for src, cnt in sorted(dq.get("source_distribution", {}).items(), key=lambda x: -x[1]):
-            st.markdown(f"- {src} · {cnt}")
-
-    if artifacts["llm_log"]:
-        with st.expander("AI drafting log", expanded=False):
-            for line in artifacts["llm_log"]:
-                st.markdown(f"- {line}")
-
-    audit = REPO_ROOT / "output" / "mcp_audit_log.jsonl"
-    if audit.exists():
-        with st.expander("MCP server audit log (append-only)", expanded=False):
-            st.code(audit.read_text(encoding="utf-8")[-3000:], language="json")
-
-st.divider()
-st.caption("GrowPulse · approval-gated MCP · draft-only email · deterministic core with optional "
-           "Groq drafting · not affiliated with or endorsed by Groww · nothing here is investment advice.")
+nav.run()
