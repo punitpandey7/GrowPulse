@@ -52,47 +52,66 @@ st.set_page_config(page_title="GrowPulse", layout="wide",
 st.markdown(
     """
 <style>
-    /* clean light canvas — set in .streamlit/config.toml, reinforced here */
-    .block-container { padding-top: 1.1rem; padding-bottom: 2rem; max-width: 1180px; }
-    .stApp { background-color: #FFFFFF; }
+    /* clean colorful canvas */
+    .block-container { padding-top: 1.2rem; padding-bottom: 2.5rem; max-width: 1240px; }
+    .stApp { background: radial-gradient(1400px 700px at 10% -20%, #EEF6FF 0%, #F8FAFC 45%, #F7F9FC 100%); }
     header[data-testid="stHeader"] { background: transparent; }
+    [data-testid="stSidebar"] { background: linear-gradient(180deg, #F8FAFF 0%, #F6F8FB 100%); border-right: 1px solid #E6EBF5; }
 
-    /* clean light canvas with soft tint */
-    .block-container { padding-top: 1.0rem; padding-bottom: 2rem; max-width: 1200px; }
-    .stApp { background: radial-gradient(1200px 600px at 80% -10%, #F0F9FF 0%, #F8FAFC 55%, #F8FAFC 100%); }
-    header[data-testid="stHeader"] { background: transparent; }
-
-    /* hero: subtle pill with accent */
+    /* hero */
     .gp-hero {
-        background: linear-gradient(90deg, rgba(37,99,235,0.10) 0%, rgba(14,165,233,0.06) 100%);
-        border: 1px solid rgba(37,99,235,0.28); border-radius: 14px;
-        padding: 18px 24px; margin: 0 0 14px 0;
+        background: linear-gradient(90deg, rgba(37,99,235,0.16) 0%, rgba(14,165,233,0.12) 60%, rgba(34,197,94,0.08) 100%);
+        border: 1px solid rgba(37,99,235,0.35); border-radius: 16px;
+        padding: 22px 28px; margin: 0 0 16px 0; box-shadow: 0 12px 40px -18px rgba(37,99,235,0.65);
     }
-    .gp-hero h1 { color: #0F172A; margin: 0; font-size: 1.95rem; font-weight: 700; letter-spacing: -.3px; }
-    .gp-hero p  { color: #475569; margin: 6px 0 0 0; font-size: .97rem; max-width: 820px; }
+    .gp-hero h1 { color: #0F172A; margin: 0; font-size: 2.05rem; font-weight: 700; letter-spacing: -.4px; }
+    .gp-hero p  { color: #334155; margin: 8px 0 0 0; font-size: 1.0rem; max-width: 880px; }
 
-    /* KPI cards: colorful, consistent height */
+    /* KPI cards */
     .gp-card {
-        border-radius: 12px; padding: 14px 18px; background: #FFFFFF;
-        border: 1px solid #E5E7EB; border-top: 3px solid #2563EB;
-        box-shadow: 0 1px 1px rgba(15,23,42,0.01), 0 1px 2px rgba(15,23,42,0.02);
-        min-height: 100px; display: flex; flex-direction: column; justify-content: center;
+        border-radius: 14px; padding: 16px 20px; background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
+        border: 1px solid #E6EBF5; border-top: 3px solid #2563EB;
+        box-shadow: 0 12px 40px -22px rgba(15,23,42,0.9);
+        min-height: 104px; display: flex; flex-direction: column; justify-content: center;
     }
     .gp-card.teal   { border-top-color: #0EA5E9; }
     .gp-card.green  { border-top-color: #22C55E; }
     .gp-card.amber  { border-top-color: #F59E0B; }
     .gp-card.violet { border-top-color: #8B5CF6; }
-    .gp-card .num   { font-size: 1.7rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
-    .gp-card .lbl   { font-size: .82rem; color: #475569; margin-top: 4px; }
+    .gp-card .num   { font-size: 1.8rem; font-weight: 700; color: #0F172A; line-height: 1.15; }
+    .gp-card .lbl   { font-size: .83rem; color: #475569; margin-top: 6px; }
 
     .gp-quote {
-        border-left: 3px solid #0D9488; border-radius: 10px;
-        background: #FFFFFF; border-top: 1px solid #E6E9ED;
-        border-right: 1px solid #E6E9ED; border-bottom: 1px solid #E6E9ED;
-        padding: 12px 14px; min-height: 168px; font-size: .92rem; line-height: 1.5;
-        color: #1F2937;
+        border-left: 3px solid #2563EB; border-radius: 12px;
+        background: linear-gradient(180deg, #FFFFFF 0%, #FBFDFF 100%);
+        border-top: 1px solid #E6EBF5; border-right: 1px solid #E6EBF5; border-bottom: 1px solid #E6EBF5;
+        padding: 14px 16px; min-height: 176px; font-size: .94rem; line-height: 1.55; color: #1F2937;
+        box-shadow: 0 12px 40px -24px rgba(15,23,42,0.85);
     }
     .gp-quote .src  { font-size: .76rem; color: #6B7280; margin-top: 10px; }
+
+    .gp-banner {
+        border-radius: 12px; padding: 14px 18px; margin: 6px 0 12px 0;
+        background: linear-gradient(90deg, rgba(245,158,11,0.14) 0%, rgba(251,191,36,0.10) 100%);
+        border: 1px solid rgba(245,158,11,0.5); color: #92400E;
+        font-size: .94rem;
+    }
+    .gp-banner b { color: #92400E; }
+
+    .gp-chip {
+        display: inline-block; padding: 3px 12px; margin: 0 6px 6px 0; border-radius: 999px;
+        background: linear-gradient(90deg, rgba(37,99,235,0.12) 0%, rgba(14,165,233,0.10) 100%);
+        border: 1px solid rgba(37,99,235,0.4); font-size: .77rem; color: #1E3A8A;
+    }
+
+    /* Streamlit internals */
+    div[data-testid="stVerticalBlockBorderWrapper"] { border-radius: 14px; border-color: #E6EBF5; background: #FFFFFF; box-shadow: 0 12px 40px -26px rgba(15,23,42,0.85); overflow: visible; }
+    div[data-testid="stTabs"] button[data-baseweb="tab"] { font-weight: 600; padding-top: 8px; padding-bottom: 8px; }
+    div[data-testid="stTabs"] [data-baseweb="tab-list"] { gap: 6px; flex-wrap: wrap; }
+    div[data-testid="stMetricValue"] { font-size: 1.5rem; color: #0F172A; }
+    div[data-testid="stProgress"] div[data-testid="stProgressBar"] > div { background-color: #2563EB; }
+    [data-testid="stMarkdownContainer"] h1, [data-testid="stMarkdownContainer"] h2, [data-testid="stMarkdownContainer"] h3 { color: #0F172A; letter-spacing: -.2px; }
+    .stCaption { color: #475569 !important; }
 
     .gp-banner {
         border-radius: 10px; padding: 13px 16px; margin: 4px 0 10px 0;
